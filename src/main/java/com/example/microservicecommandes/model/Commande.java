@@ -17,6 +17,7 @@ public class Commande {
     private LocalDate date;
 
     private Double montant;
+    private Long idProduit;
 
     // Constructeur par défaut (obligatoire pour JPA)
     public Commande() {}
@@ -29,7 +30,13 @@ public class Commande {
         this.date = date;
         this.montant = montant;
     }
+    public Long getIdProduit() {
+        return idProduit;
+    }
 
+    public void setIdProduit(Long idProduit) {
+        this.idProduit = idProduit;
+    }
     // Getters et Setters
     public Long getId() {
         return id;

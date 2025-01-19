@@ -28,13 +28,23 @@ public class CommandeController {
     }
 
     @PostMapping
-    public ResponseEntity<CommandeDTO> createCommande(@RequestBody CommandeDTO commandeDTO) {
-        return ResponseEntity.ok(commandeService.createCommande(commandeDTO));
+    public ResponseEntity<?> createCommande(@RequestBody CommandeDTO commandeDTO) {
+        try {
+            CommandeDTO createdCommande = commandeService.createCommande(commandeDTO);
+            return ResponseEntity.ok(createdCommande);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CommandeDTO> updateCommande(@PathVariable Long id, @RequestBody CommandeDTO commandeDTO) {
-        return ResponseEntity.ok(commandeService.updateCommande(id, commandeDTO));
+    public ResponseEntity<?> updateCommande(@PathVariable Long id, @RequestBody CommandeDTO commandeDTO) {
+        try {
+            CommandeDTO updatedCommande = commandeService.updateCommande(id, commandeDTO);
+            return ResponseEntity.ok(updatedCommande);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

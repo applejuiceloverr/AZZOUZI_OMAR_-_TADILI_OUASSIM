@@ -14,6 +14,7 @@ public class CommandeMapper {
         dto.setQuantite(commande.getQuantite());
         dto.setDate(commande.getDate());
         dto.setMontant(commande.getMontant());
+        dto.setIdProduit(commande.getIdProduit());
         return dto;
     }
 
@@ -24,6 +25,7 @@ public class CommandeMapper {
         commande.setQuantite(dto.getQuantite());
         commande.setDate(dto.getDate());
         commande.setMontant(dto.getMontant());
+        commande.setIdProduit(dto.getIdProduit());
         return commande;
     }
 }

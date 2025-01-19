@@ -7,6 +7,7 @@ import com.example.microservicecommandes.model.Commande;
 import com.example.microservicecommandes.repository.CommandeRepository;
 import com.example.microservicecommandes.service.CommandeService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,13 +19,16 @@ public class CommandeServiceImpl implements CommandeService {
     private final CommandeRepository commandeRepository;
     private final CommandeMapper commandeMapper;
     private final ApplicationPropertiesConfiguration config;
+    private final RestTemplate restTemplate;
 
     public CommandeServiceImpl(CommandeRepository commandeRepository,
                                CommandeMapper commandeMapper,
-                               ApplicationPropertiesConfiguration config) {
+                               ApplicationPropertiesConfiguration config,
+                               RestTemplate restTemplate) {
         this.commandeRepository = commandeRepository;
         this.commandeMapper = commandeMapper;
         this.config = config;
+        this.restTemplate = restTemplate;
     }
 
     @Override
@@ -38,7 +42,6 @@ public class CommandeServiceImpl implements CommandeService {
 
     @Override
     public CommandeDTO getCommandeById(Long id) {
-        // Trouver une commande par ID et convertir en DTO
         return commandeRepository.findById(id)
                 .map(commandeMapper::toDTO)
                 .orElseThrow(() -> new RuntimeException("Commande not found"));
@@ -46,7 +49,9 @@ public class CommandeServiceImpl implements CommandeService {
 
     @Override
     public CommandeDTO createCommande(CommandeDTO commandeDTO) {
-        // Convertir le DTO en entité, sauvegarder, puis retourner le DTO sauvegardé
+        // Validate the produit ID with the produit microservice
+        validateProduit(commandeDTO.getIdProduit());
+
         Commande commande = commandeMapper.toEntity(commandeDTO);
         Commande savedCommande = commandeRepository.save(commande);
         return commandeMapper.toDTO(savedCommande);
@@ -54,12 +59,15 @@ public class CommandeServiceImpl implements CommandeService {
 
     @Override
     public CommandeDTO updateCommande(Long id, CommandeDTO updatedCommandeDTO) {
-        // Trouver la commande existante, la mettre à jour avec les champs du DTO, sauvegarder et retourner le DTO
         return commandeRepository.findById(id).map(existingCommande -> {
+            // Validate the produit ID with the produit microservice
+            validateProduit(updatedCommandeDTO.getIdProduit());
+
             existingCommande.setDescription(updatedCommandeDTO.getDescription());
             existingCommande.setQuantite(updatedCommandeDTO.getQuantite());
             existingCommande.setDate(updatedCommandeDTO.getDate());
             existingCommande.setMontant(updatedCommandeDTO.getMontant());
+            existingCommande.setIdProduit(updatedCommandeDTO.getIdProduit());
             Commande updatedCommande = commandeRepository.save(existingCommande);
             return commandeMapper.toDTO(updatedCommande);
         }).orElseThrow(() -> new RuntimeException("Commande not found"));
@@ -67,10 +75,24 @@ public class CommandeServiceImpl implements CommandeService {
 
     @Override
     public void deleteCommande(Long id) {
-        // Supprimer la commande par son ID
         if (!commandeRepository.existsById(id)) {
             throw new RuntimeException("Commande not found");
         }
         commandeRepository.deleteById(id);
     }
+
+    /**
+     * Validate if the produit ID exists in the produit microservice.
+     *
+     * @param idProduit the ID of the produit to validate
+     */
+    private void validateProduit(Long idProduit) {
+        String produitServiceUrl = "http://microservice-produit/api/produits/" + idProduit;
+        try {
+            restTemplate.getForObject(produitServiceUrl, Object.class); // If this call succeeds, the product exists
+        } catch (Exception e) {
+            throw new RuntimeException("Produit with ID " + idProduit + " does not exist.");
+        }
+    }
+
 }
